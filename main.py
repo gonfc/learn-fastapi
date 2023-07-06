@@ -32,7 +32,7 @@ items = {
 
 
 @app.get("/")
-def index() -> dict[str, dict[int, Item]]:
+def root() -> dict[str, dict[int, Item]]:
     return {"items": items}
 
 
@@ -51,8 +51,8 @@ def get_items_by_parameters(
         name: str | None = None,
         price: float | None = None,
         count: int | None = None,
-        category: Category | None = None) \
-        -> dict[str, Selection | list[Item]]:
+        category: Category | None = None
+) -> dict[str, Selection | list[Item]]:
     def check_item_validity(item: Item):
         return all(
             (
@@ -68,3 +68,46 @@ def get_items_by_parameters(
         "query": {"name": name, "price": price, "count": count, "category": category},
         "selection": selection
     }
+
+
+@app.post('/')
+def add_item(item: Item) -> dict[str, Item]:
+    if item.id in items:
+        raise HTTPException(status_code=400, detail=f'Item with {item.id=} is already exists the database.')
+    items[item.id] = item
+    return {"added": item}
+
+
+@app.put('/items/{item_id}')
+def update_item(
+        # Requires an id
+        item_id: int,
+        name: str | None = None,
+        price: float | None = None,
+        count: int | None = None,
+        category: Category | None = None
+) -> dict[str, Selection | list[Item]]:
+    if all(info is None for info in (name, price, count)):
+        raise HTTPException(
+            status_code=400, detail="No parameters provided for update."
+        )
+    if item_id not in items:
+        raise HTTPException(status_code=404, detail=f'Item with {item_id=} does not found in the datbase.')
+    item = items[item_id]
+    if item.name is not None:
+        item.name = name
+    if item.price is not None:
+        item.price = price
+    if item.count is not None:
+        item.count = count
+
+    return dict['updated': item]
+
+
+@app.delete('/items/{item_id}')
+def delete_item_by_id(item_id: int) -> dict[str, Item]:
+    if item_id not in items:
+        raise HTTPException(status_code=400, detail=f'Item with {item_id=} not detected in the database.')
+    item = items[item_id]
+    items.pop(item_id)
+    return {f"deleted": item }
