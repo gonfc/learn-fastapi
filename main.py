@@ -1,13 +1,11 @@
 from enum import Enum
+from dotenv import load_dotenv
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Set
 
 app = FastAPI()
-
-from dotenv import load_dotenv
-
 load_dotenv()
 
 
